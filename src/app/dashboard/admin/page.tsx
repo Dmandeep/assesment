@@ -42,8 +42,7 @@ import {
   Clock,
   Calendar as CalendarIcon,
   FileJson,
-  GraduationCap,
-  Sparkles
+  GraduationCap
 } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { useFirestore, useCollection, useUser, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from "@/firebase"
