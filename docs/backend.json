@@ -1,0 +1,139 @@
+
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user within the Secure Assessment Gateway.",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "username": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "student"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "email", "role", "createdAt"]
+    },
+    "Exam": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Exam",
+      "type": "object",
+      "description": "Defines a multiple-choice examination metadata.",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "subject": { "type": "string", "enum": ["English", "Computers", "Arithmetic", "Reasoning", "Others"] },
+        "timeLimitMinutes": { "type": "number" },
+        "passingScore": { "type": "number" },
+        "createdBy": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "isPractice": { "type": "boolean", "description": "If true, the exam has no timer and is automatically graded for the student." }
+      },
+      "required": ["id", "title", "subject", "timeLimitMinutes", "passingScore", "createdBy", "status"]
+    },
+    "Question": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Question",
+      "type": "object",
+      "description": "Public part of a question (text and options).",
+      "properties": {
+        "id": { "type": "string" },
+        "examId": { "type": "string" },
+        "questionText": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["id", "examId", "questionText", "options"]
+    },
+    "AnswerKey": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AnswerKey",
+      "type": "object",
+      "description": "Private part of a question (correct index). Admin only.",
+      "properties": {
+        "id": { "type": "string", "description": "Matches the Question ID" },
+        "correctOptionIndex": { "type": "number" }
+      },
+      "required": ["id", "correctOptionIndex"]
+    },
+    "Result": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Result",
+      "type": "object",
+      "description": "Stores student responses and calculated scores.",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentEmail": { "type": "string" },
+        "studentUsername": { "type": "string" },
+        "examId": { "type": "string" },
+        "examTitle": { "type": "string" },
+        "score": { "type": "number" },
+        "correctCount": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "integrityStatus": { "type": "string" },
+        "responses": { "type": "object", "description": "Map of questionId to selected option index" },
+        "correctAnswers": { "type": "object", "description": "Map of questionId to correct option index (stored after grading)" }
+      },
+      "required": ["id", "studentId", "examId", "startedAt", "integrityStatus"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": { "$ref": "#/backend/entities/User" },
+          "description": "User profiles."
+        }
+      },
+      {
+        "path": "/admin_roles/{adminId}",
+        "definition": {
+          "entityName": "User",
+          "schema": { "$ref": "#/backend/entities/User" },
+          "description": "Admin marker documents."
+        }
+      },
+      {
+        "path": "/exams/{examId}",
+        "definition": {
+          "entityName": "Exam",
+          "schema": { "$ref": "#/backend/entities/Exam" },
+          "description": "Exam metadata."
+        }
+      },
+      {
+        "path": "/exams/{examId}/questions/{questionId}",
+        "definition": {
+          "entityName": "Question",
+          "schema": { "$ref": "#/backend/entities/Question" },
+          "description": "Public question content."
+        }
+      },
+      {
+        "path": "/exams/{examId}/answers/{questionId}",
+        "definition": {
+          "entityName": "AnswerKey",
+          "schema": { "$ref": "#/backend/entities/AnswerKey" },
+          "description": "Protected answer keys (Admin Only, unless practice enabled)."
+        }
+      },
+      {
+        "path": "/users/{studentId}/results/{resultId}",
+        "definition": {
+          "entityName": "Result",
+          "schema": { "$ref": "#/backend/entities/Result" },
+          "description": "Student exam attempts."
+        }
+      }
+    ]
+  }
+}

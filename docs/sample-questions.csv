@@ -1,0 +1,9 @@
+questionText,option1,option2,option3,option4,correctIndex
+"If the price of an item rises from 800 to 920, what is the percentage increase?","12%","15%","18%","20%",1
+"A train covers 180 km in 3 hours. What is its average speed?","50 km/h","55 km/h","60 km/h","65 km/h",2
+"A shopkeeper buys an article for 250 and sells it for 300. What is the profit percent?","15%","18%","20%","25%",2
+"If 8 workers complete a task in 12 days, how many days will 6 workers take?","14","15","16","18",2
+"Find the next number in the series: 3, 6, 11, 18, 27, ?","36","38","40","42",1
+"What is the probability of getting a sum of 7 when two dice are rolled?","1/6","1/8","1/9","1/12",0
+"Choose the word most nearly opposite in meaning to ABUNDANT.","Plentiful","Scarce","Ample","Copious",1
+"Select the correctly spelled word.","Occurence","Occurrence","Ocurrence","Occurrance",1
