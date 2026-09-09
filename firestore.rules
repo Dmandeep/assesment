@@ -1,0 +1,74 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Efficient admin check that relies on the dedicated admin_roles collection
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admin_roles/$(request.auth.uid));
+    }
+
+    // --- COLLECTION RULES ---
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      // Scoped to the caller's own uid so a signed-in user cannot create a
+      // profile document at someone else's uid. Admin provisioning creates
+      // other users' profiles and passes via isAdmin().
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /admin_roles/{adminId} {
+      // Allow any signed-in user to check if they are an admin
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow create, delete: if isAdmin(); 
+      allow update: if false;
+    }
+
+    match /exams/{examId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+
+      match /questions/{questionId} {
+        allow get, list: if isSignedIn();
+        allow create, update, delete: if isAdmin();
+      }
+
+      match /answers/{questionId} {
+        // Students can only read answers for practice exams to enable client-side auto-grading
+        allow write: if isAdmin();
+        allow read: if isAdmin() || (isSignedIn() && get(/databases/$(database)/documents/exams/$(examId)).data.isPractice == true);
+      }
+    }
+
+    match /users/{studentId}/results/{resultId} {
+      // Basic CRUD for students on their own results
+      allow get, list: if isOwner(studentId) || isAdmin();
+      allow create: if isOwner(studentId);
+      allow update: if isOwner(studentId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // --- COLLECTION GROUP RULES ---
+    // Specifically allowed for the Admin Audit Log feature and Student Leaderboard
+    match /{path=**}/results/{resultId} {
+      // Allow all signed-in users to list results for the Leaderboard feature
+      allow list: if isSignedIn();
+      allow get: if isAdmin() || (isSignedIn() && resource.data.studentId == request.auth.uid);
+    }
+  }
+}

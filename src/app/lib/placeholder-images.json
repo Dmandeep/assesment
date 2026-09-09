@@ -1,0 +1,23 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Abstract technology and security background with glowing lines",
+      "imageUrl": "https://picsum.photos/seed/secure1/1200/800",
+      "imageHint": "security technology"
+    },
+    {
+      "id": "admin-avatar",
+      "description": "Professional administrator portrait",
+      "imageUrl": "https://picsum.photos/seed/admin1/100/100",
+      "imageHint": "professional person"
+    },
+    {
+      "id": "student-avatar",
+      "description": "Student portrait",
+      "imageUrl": "https://picsum.photos/seed/student1/100/100",
+      "imageHint": "student person"
+    }
+  ]
+}

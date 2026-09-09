@@ -1,0 +1,185 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  CRT Assessment design tokens.
+
+  Academic and precise: a neutral foundation, a single deep-blue primary, and
+  semantic status colours. Every token is defined in BOTH themes — the previous
+  stylesheet defined only `:root`, so `darkMode: ['class']` and the theme
+  toggle had nothing to switch to, and the `--sidebar-*` variables referenced
+  by tailwind.config.ts were never declared at all.
+*/
+
+@layer base {
+  :root {
+    /* Surfaces */
+    --background: 210 20% 98%;
+    --foreground: 222 24% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 24% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 24% 12%;
+
+    /* Brand */
+    --primary: 221 68% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary + neutral surfaces */
+    --secondary: 214 24% 94%;
+    --secondary-foreground: 222 24% 18%;
+    --muted: 214 22% 95%;
+    --muted-foreground: 215 14% 42%;
+    --accent: 214 24% 94%;
+    --accent-foreground: 222 24% 18%;
+
+    /* Semantic status */
+    --destructive: 0 72% 46%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 56% 32%;
+    --success-foreground: 0 0% 100%;
+    --warning: 35 88% 42%;
+    --warning-foreground: 0 0% 100%;
+    --info: 205 78% 40%;
+    --info-foreground: 0 0% 100%;
+
+    /* Lines and focus */
+    --border: 214 20% 89%;
+    --input: 214 20% 86%;
+    --ring: 221 68% 40%;
+
+    /* Sidebar — referenced by tailwind.config.ts, previously undefined */
+    --sidebar-background: 218 28% 15%;
+    --sidebar-foreground: 214 20% 88%;
+    --sidebar-primary: 217 80% 62%;
+    --sidebar-primary-foreground: 218 28% 12%;
+    --sidebar-accent: 218 24% 22%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 218 22% 24%;
+    --sidebar-ring: 217 80% 62%;
+
+    /* Charts */
+    --chart-1: 221 68% 46%;
+    --chart-2: 174 52% 38%;
+    --chart-3: 35 84% 48%;
+    --chart-4: 265 52% 55%;
+    --chart-5: 340 62% 50%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222 26% 9%;
+    --foreground: 214 20% 92%;
+    --card: 222 24% 12%;
+    --card-foreground: 214 20% 92%;
+    --popover: 222 24% 12%;
+    --popover-foreground: 214 20% 92%;
+
+    --primary: 217 78% 62%;
+    --primary-foreground: 222 30% 10%;
+
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 214 20% 92%;
+    --muted: 220 20% 17%;
+    --muted-foreground: 215 16% 64%;
+    --accent: 220 20% 20%;
+    --accent-foreground: 214 20% 95%;
+
+    --destructive: 0 66% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 46% 46%;
+    --success-foreground: 222 30% 10%;
+    --warning: 35 78% 56%;
+    --warning-foreground: 222 30% 10%;
+    --info: 205 70% 58%;
+    --info-foreground: 222 30% 10%;
+
+    --border: 220 18% 22%;
+    --input: 220 18% 26%;
+    --ring: 217 78% 62%;
+
+    --sidebar-background: 222 28% 11%;
+    --sidebar-foreground: 214 18% 84%;
+    --sidebar-primary: 217 78% 62%;
+    --sidebar-primary-foreground: 222 30% 10%;
+    --sidebar-accent: 220 20% 19%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 18% 20%;
+    --sidebar-ring: 217 78% 62%;
+
+    --chart-1: 217 78% 62%;
+    --chart-2: 174 48% 52%;
+    --chart-3: 35 78% 58%;
+    --chart-4: 265 58% 68%;
+    --chart-5: 340 60% 62%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04';
+  }
+
+  /*
+    A visible focus ring on every keyboard-focused control. The exam runner is
+    operated under time pressure and must be fully keyboard navigable.
+  */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Tabular figures so the exam countdown does not jitter as digits change. */
+  .tabular-time {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/*
+  Scroll reveal, used by useScrollReveal. Kept as a class because pages already
+  reference it; now gated on motion preference.
+*/
+.reveal-up {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.reveal-up.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/*
+  Retained class names so existing markup keeps working, but redefined to match
+  the calmer design language: no lift-on-hover, no backdrop blur.
+*/
+.btn-premium {
+  @apply transition-colors duration-150;
+}
+
+.glass-card {
+  @apply bg-card border border-border shadow-sm;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal-up {
+    opacity: 1;
+    transform: none;
+  }
+}
