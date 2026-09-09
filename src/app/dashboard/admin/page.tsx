@@ -42,11 +42,12 @@ import {
   Clock,
   Calendar as CalendarIcon,
   FileJson,
-  GraduationCap
+  GraduationCap,
+  Sparkles
 } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { useFirestore, useCollection, useUser, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from "@/firebase"
-import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, collectionGroup, getDocs, updateDoc, writeBatch, where, orderBy, limit, getCountFromServer } from "firebase/firestore"
+import { collection, doc, setDoc, deleteDoc, getDoc, serverTimestamp, query, collectionGroup, getDocs, updateDoc, writeBatch, where, orderBy, limit, getCountFromServer } from "firebase/firestore"
 import { generateQuestionIdeas, type GenerateQuestionIdeasOutput } from "@/ai/flows/admin-question-idea-generator"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -130,6 +131,8 @@ export default function AdminDashboard() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isAttachingDoc, setIsAttachingDoc] = useState(false)
   const [aiIdeas, setAiIdeas] = useState<GenerateQuestionIdeasOutput | null>(null)
+  const [performanceInsights, setPerformanceInsights] = useState<any>(null)
+  const [isAnalyzingPerformance, setIsAnalyzingPerformance] = useState(false)
   const [topic, setTopic] = useState("")
   const [examToDelete, setExamToDelete] = useState<string | null>(null)
   const [userToDelete, setUserToDelete] = useState<string | null>(null)
@@ -928,6 +931,48 @@ export default function AdminDashboard() {
     { id: "performance", label: "Performance", icon: BarChart3 },
   ]
 
+  const handleAnalyzePerformance = async () => {
+    setIsAnalyzingPerformance(true);
+    setPerformanceInsights(null);
+    try {
+      if (!results || results.length === 0) {
+        toast({ title: 'No results', description: 'Need student attempts to analyze.' });
+        setIsAnalyzingPerformance(false);
+        return;
+      }
+      
+      const missedQuestionsTexts = new Set<string>();
+      for (const result of results) {
+        const { responses, correctAnswers, examId } = result;
+        if (!responses || !correctAnswers || !examId) continue;
+        
+        for (const [qId, ans] of Object.entries(responses)) {
+          if (ans !== correctAnswers[qId]) {
+            const qDoc = await getDoc(doc(db, 'exams', examId, 'questions', qId));
+            if (qDoc.exists()) {
+              missedQuestionsTexts.add(qDoc.data().questionText);
+            }
+          }
+        }
+      }
+      
+      const missedList = Array.from(missedQuestionsTexts);
+      if (missedList.length === 0) {
+         toast({ title: 'No missed questions', description: 'Everyone is scoring 100%!' });
+         setIsAnalyzingPerformance(false);
+         return;
+      }
+      
+      const { analyzePerformanceInsights } = await import('@/ai/flows/admin-performance-analyzer');
+      const analysis = await analyzePerformanceInsights({ missedQuestions: missedList });
+      setPerformanceInsights(analysis);
+    } catch (err: any) {
+      toast({ title: 'Analysis Failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsAnalyzingPerformance(false);
+    }
+  };
+
   if (!mounted || isUserLoading || adminRoleLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-background" suppressHydrationWarning>
       <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -1073,6 +1118,47 @@ export default function AdminDashboard() {
                         </div>
                       )}
                     </ScrollArea>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="grid grid-cols-1 gap-8 mt-8">
+                <Card>
+                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="text-base font-semibold flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-primary" /> AI Performance Analyst
+                      </CardTitle>
+                      <CardDescription>Analyze all student attempts to find common weaknesses and learning gaps.</CardDescription>
+                    </div>
+                    <Button onClick={handleAnalyzePerformance} disabled={isAnalyzingPerformance}>
+                      {isAnalyzingPerformance ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analyzing</> : "Run Analysis"}
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {performanceInsights ? (
+                      <div className="space-y-4 bg-muted/30 p-4 rounded-xl border">
+                        <div>
+                          <h4 className="text-sm font-semibold mb-2">Weak Topics Detected</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {performanceInsights.weakTopics.map((topic: string, i: number) => (
+                              <Badge key={i} variant="secondary">{topic}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold mb-1 mt-3">Analysis</h4>
+                          <p className="text-sm text-muted-foreground">{performanceInsights.analysisSummary}</p>
+                        </div>
+                        <div className="bg-primary/10 p-3 rounded-lg mt-3 border border-primary/20">
+                          <h4 className="text-sm font-semibold mb-1 text-primary">Recommended Action</h4>
+                          <p className="text-sm text-foreground">{performanceInsights.recommendedAction}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-8 text-center text-sm text-muted-foreground border-2 border-dashed rounded-lg bg-muted/30">
+                        Click "Run Analysis" to let Gemini review student mistakes and generate a performance report.
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
