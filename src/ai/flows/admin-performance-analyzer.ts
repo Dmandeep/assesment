@@ -15,8 +15,14 @@ const AnalyzePerformanceOutputSchema = z.object({
 });
 export type AnalyzePerformanceOutput = z.infer<typeof AnalyzePerformanceOutputSchema>;
 
-export async function analyzePerformanceInsights(input: AnalyzePerformanceInput): Promise<AnalyzePerformanceOutput> {
-  return analyzePerformanceFlow(input);
+export async function analyzePerformanceInsights(input: AnalyzePerformanceInput) {
+  try {
+    const result = await analyzePerformanceFlow(input);
+    return { success: true, data: result };
+  } catch (error: any) {
+    console.error("AI Performance Analyst Error:", error);
+    return { success: false, error: error.message || "An unknown error occurred during AI analysis." };
+  }
 }
 
 const prompt = ai.definePrompt({

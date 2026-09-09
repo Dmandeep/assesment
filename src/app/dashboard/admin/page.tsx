@@ -48,6 +48,7 @@ import { ModeToggle } from "@/components/mode-toggle"
 import { useFirestore, useCollection, useUser, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from "@/firebase"
 import { collection, doc, setDoc, deleteDoc, getDoc, serverTimestamp, query, collectionGroup, getDocs, updateDoc, writeBatch, where, orderBy, limit, getCountFromServer } from "firebase/firestore"
 import { generateQuestionIdeas, type GenerateQuestionIdeasOutput } from "@/ai/flows/admin-question-idea-generator"
+import { analyzePerformanceInsights } from "@/ai/flows/admin-performance-analyzer"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -949,7 +950,10 @@ export default function AdminDashboard() {
           if (ans !== correctAnswers[qId]) {
             const qDoc = await getDoc(doc(db, 'exams', examId, 'questions', qId));
             if (qDoc.exists()) {
-              missedQuestionsTexts.add(qDoc.data().questionText);
+              const text = qDoc.data().questionText;
+              if (text && typeof text === 'string') {
+                missedQuestionsTexts.add(text);
+              }
             }
           }
         }
@@ -962,9 +966,11 @@ export default function AdminDashboard() {
          return;
       }
       
-      const { analyzePerformanceInsights } = await import('@/ai/flows/admin-performance-analyzer');
-      const analysis = await analyzePerformanceInsights({ missedQuestions: missedList });
-      setPerformanceInsights(analysis);
+      const response = await analyzePerformanceInsights({ missedQuestions: missedList });
+      if (!response.success) {
+        throw new Error(response.error);
+      }
+      setPerformanceInsights(response.data);
     } catch (err: any) {
       toast({ title: 'Analysis Failed', description: err.message, variant: 'destructive' });
     } finally {
